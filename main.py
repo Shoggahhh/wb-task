@@ -19,6 +19,8 @@ from db.db import (
 )
 
 from config.config import (
+    JSON_PATH,
+    XLSX_PATH,
     IDX_JSON,
     HOSTS_JSON,
     XLSX_FILE,
@@ -26,20 +28,27 @@ from config.config import (
 
 
 if __name__ == "__main__":
+    JSON_PATH.mkdir(parents=True, exist_ok=True)
+    XLSX_PATH.mkdir(parents=True, exist_ok=True)
+
+    # Парсинг сырых данных и сохранение в json
     logger.info("parse")
     parse_good_ids(query="пальто из натуральной шерсти", file_name_json=IDX_JSON)
     parse_hosts(file_name_json=HOSTS_JSON)
 
+    # Получение данных из json
     logger.info("handler get_idx get_hosts")
     idx_list = get_idx(json_file_path=IDX_JSON)
-    logger.info(idx_list)
     hosts_list = get_hosts(json_file_path=HOSTS_JSON)
 
-    logger.info("get_info")
+    logger.info("handler get_info")
     info_from_idx = get_info_from_idx_json(idx_json_file=IDX_JSON)
-    logger.info(info_from_idx)
+
+    # Подключение к БД
     logger.info("db init")
     init_db()
+
+    # Добавление данных с парсига в БД
     logger.info("load_initial_data")
     load_initial_data(info_from_idx=info_from_idx)
 
@@ -53,4 +62,5 @@ if __name__ == "__main__":
         update_by_id(nm_id, card_data)
         logger.info(f"Save: {nm_id}")
 
+    # Экспорт в excel
     export_to_excel(XLSX_FILE)
