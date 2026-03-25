@@ -11,9 +11,6 @@ from pathlib import Path
 from logger.logger import logger
 
 
-# "пальто из натуральной шерсти"
-
-
 def parse_content(url: str, page, headers: dict[str, Any] = None) -> str:
     page.set_extra_http_headers(headers=headers)
     page.goto(url)
