@@ -40,29 +40,38 @@ def load_initial_data(info_from_idx: dict[str, Any]) -> None:
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM data")
-    count = cursor.fetchone()[0]
-    if count > 0:
-        logger.info(f"Records: {count} exists. Skip load")
-        conn.close()
-        return
-
-    # if idx_json_path.exists():
-    #     logger.info(f"File in {idx_json_path} not found!")
-    #     conn.close()
-    #     return
-    #
-    # with open(idx_json_path, "r", encoding="utf-8") as f:
-    #     data_json = json.load(f)
+    updated = 0
+    inserted = 0
 
     for item_id, item_data in info_from_idx.items():
-        cursor.execute(
-            """
-            INSERT OR REPLACE INTO data (id, json_data) 
-            VALUES (?, ?)
-        """,
-            (str(item_id), json.dumps(item_data, ensure_ascii=False)),
-        )
+        cursor.execute("SELECT id FROM data WHERE id = ?", (str(item_id),))
+        row = cursor.fetchone()
+
+        if row:
+            cursor.execute("SELECT json_data FROM data WHERE id = ?", (str(item_id),))
+            existing_json = cursor.fetchone()[0]
+            existing_data = json.loads(existing_json)
+
+            merged_data = merge_data(existing_data, item_data)
+
+            cursor.execute(
+                """
+                UPDATE data
+                SET json_data = ?
+                WHERE id = ?
+                """,
+                (json.dumps(merged_data, ensure_ascii=False), str(item_id)),
+            )
+            updated += 1
+        else:
+            cursor.execute(
+                """
+                INSERT INTO data (id, json_data)
+                VALUES (?, ?)
+                """,
+                (str(item_id), json.dumps(item_data, ensure_ascii=False)),
+            )
+            inserted += 1
 
     conn.commit()
     conn.close()
