@@ -33,7 +33,9 @@ if __name__ == "__main__":
 
     # Парсинг сырых данных и сохранение в json
     logger.info("parse")
-    parse_good_ids(query="пальто из натуральной шерсти", file_name_json=IDX_JSON)
+    parse_good_ids(
+        query="пальто из натуральной шерсти", file_name_json=IDX_JSON, max_pages=5
+    )
     parse_hosts(file_name_json=HOSTS_JSON)
 
     # Получение данных из json
